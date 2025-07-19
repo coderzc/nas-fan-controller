@@ -65,6 +65,28 @@ fan_control_paths:
      fan_speed: /sys/class/hwmon/hwmon0/fan1_input
    ```
 
+## 运行模式配置
+
+通过设置 `RUN_MODE` 环境变量来控制运行模式：
+
+### 1. 守护进程模式（默认）
+```yaml
+environment:
+  - RUN_MODE=daemon  # 持续监控和控制风扇
+```
+
+### 2. 测试模式
+```yaml
+environment:
+  - RUN_MODE=test    # 执行一次检查后退出
+```
+
+### 3. 发现模式
+```yaml
+environment:
+  - RUN_MODE=discover # 显示硬盘信息后退出
+```
+
 ## 监控和调试
 
 ### 查看日志
@@ -72,25 +94,25 @@ fan_control_paths:
 docker logs -f nas-fan-controller
 ```
 
-### 发现硬盘和温度
-首先运行发现模式来查看系统中的硬盘：
-
+### 快速测试
 ```bash
-docker exec nas-fan-controller python3 /app/nas_fan_controller.py --discover
+# 使用环境变量切换到测试模式
+docker-compose down
+docker-compose up -e RUN_MODE=test
+
+# 或者使用override文件
+cp docker-compose.override.example.yml docker-compose.override.yml
+# 编辑override文件设置RUN_MODE=test
+docker-compose up
 ```
 
-### 测试单次运行
-执行一次温度检查和风扇调节：
-
+### 发现硬盘
 ```bash
-docker exec nas-fan-controller python3 /app/nas_fan_controller.py --test
-```
-
-### 守护进程模式
-持续运行监控：
-
-```bash
-docker exec nas-fan-controller python3 /app/nas_fan_controller.py --daemon
+# 设置为发现模式
+docker run --rm --privileged \
+  -v /dev:/dev -v /sys:/sys -v /proc:/proc:ro \
+  -e RUN_MODE=discover \
+  czcoder/nas-fan-controller:latest
 ```
 
 ### 检查健康状态

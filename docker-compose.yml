@@ -26,11 +26,5 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - TZ=Asia/Shanghai
-    
-    # 健康检查
-    healthcheck:
-      test: ["CMD", "python3", "/app/nas_fan_controller.py", "--test"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      # 运行模式: daemon(默认) | test | discover
+      - RUN_MODE=daemon

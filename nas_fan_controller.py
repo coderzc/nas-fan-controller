@@ -359,6 +359,16 @@ def main():
     
     args = parser.parse_args()
     
+    # 支持通过环境变量控制运行模式（方便Docker部署）
+    run_mode = os.getenv('RUN_MODE', 'daemon').lower()
+    if not any([args.daemon, args.test, args.discover]):
+        if run_mode == 'test':
+            args.test = True
+        elif run_mode == 'discover':
+            args.discover = True
+        else:  # 默认为daemon模式
+            args.daemon = True
+    
     # 检查是否以root权限运行
     if os.geteuid() != 0:
         print("警告: 建议以root权限运行此脚本以确保能够控制风扇")

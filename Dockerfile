@@ -32,9 +32,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # 设置权限
 RUN chmod +x /app/nas_fan_controller.py
 
-# 健康检查
-HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD python3 /app/nas_fan_controller.py --test > /dev/null 2>&1 || exit 1
 
 # 配置文件已在镜像中，可通过挂载覆盖
 
