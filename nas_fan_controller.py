@@ -355,7 +355,7 @@ class NASFanController:
         except Exception:
             pass  # 如果无法读取RPM，就不显示
             
-        self.logger.info(f"硬盘温度: {temp_info}, 最高: {max_temp}°C, 风扇: {new_speed}%{rpm_info}")
+        self.logger.info(f"硬盘温度: {temp_info}, 最高: {max_temp}°C, PWM: {new_speed}%{rpm_info}")
         
         return temperatures, max_temp, new_speed
     
