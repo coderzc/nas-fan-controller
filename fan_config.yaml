@@ -33,10 +33,16 @@ fan_control_paths:
   fan_ctrl_speed: /sys/class/hwmon/hwmon0/pwm1     # PWM控制路径
   fan_speed: /sys/class/hwmon/hwmon0/fan1_input   # 风扇转速读取路径
 
+# PWM配置
+pwm_config:
+  max_value: 255      # PWM最大值（大部分硬件为255）
+  max_rpm: null       # 风扇最大转速（可选，用于精确计算百分比）
+
 # 常见硬件配置示例：
-# 绿联NAS:
+# 绿联NAS (4300 Plus):
 #   fan_ctrl_speed: /sys/devices/platform/ug-fan/fan_ctrl_speed
 #   fan_speed: /sys/devices/platform/ug-fan/fan_speed
+#   max_rpm: 1740  # 根据实际最大转速调整
 # 其他硬件:
 #   fan_ctrl_speed: /sys/class/hwmon/hwmon1/pwm2
 #   fan_speed: /sys/class/hwmon/hwmon1/fan2_input

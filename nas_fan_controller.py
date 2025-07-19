@@ -186,7 +186,8 @@ class NASFanController:
         self.temp_monitor = DiskTemperatureMonitor()
         fan_ctrl_path = self.config['fan_control_paths']['fan_ctrl_speed']
         fan_speed_path = self.config['fan_control_paths']['fan_speed']
-        self.fan_controller = FanController(fan_ctrl_path, fan_speed_path)
+        pwm_max_value = self.config['pwm_config']['max_value']
+        self.fan_controller = FanController(fan_ctrl_path, fan_speed_path, pwm_max_value)
         self.logger = logging.getLogger(__name__)
     
     def _load_config(self) -> Dict:
@@ -207,6 +208,10 @@ class NASFanController:
             "fan_control_paths": {
                 "fan_ctrl_speed": "/sys/class/hwmon/hwmon0/pwm1",
                 "fan_speed": "/sys/class/hwmon/hwmon0/fan1_input"
+            },
+            "pwm_config": {
+                "max_value": 255,     # PWM最大值（绿联为255，标准Linux通常为255）
+                "max_rpm": None       # 风扇最大转速（可选，用于精确计算百分比）
             },
             "check_interval": 30,  # 检查间隔（秒）
             "disks": [],          # 要监控的硬盘，空列表表示自动发现
@@ -320,7 +325,37 @@ class NASFanController:
         
         # 记录状态
         temp_info = ', '.join([f"{dev}: {temp}°C" for dev, temp in temperatures.items()])
-        self.logger.info(f"硬盘温度: {temp_info}, 最高: {max_temp}°C, 风扇: {new_speed}%")
+        
+        # 获取实际RPM信息（如果可能）
+        rpm_info = ""
+        try:
+            with open(self.config['fan_control_paths']['fan_speed'], 'r') as f:
+                fan_output = f.read().strip()
+                if 'RPM' in fan_output:
+                    # 绿联格式: "fan speed:720 RPMnow 92 of 255 (set 0 ~ 255)"
+                    import re
+                    rpm_match = re.search(r'(\d+)\s*RPM', fan_output)
+                    if rpm_match:
+                        current_rpm = int(rpm_match.group(1))
+                        max_rpm = self.config['pwm_config'].get('max_rpm')
+                        if max_rpm:
+                            actual_percent = int((current_rpm / max_rpm) * 100)
+                            rpm_info = f", 实际: {current_rpm}RPM({actual_percent}%)"
+                        else:
+                            rpm_info = f", 实际: {current_rpm}RPM"
+                else:
+                    # 标准Linux格式：直接RPM数值
+                    current_rpm = int(fan_output)
+                    max_rpm = self.config['pwm_config'].get('max_rpm')
+                    if max_rpm:
+                        actual_percent = int((current_rpm / max_rpm) * 100)
+                        rpm_info = f", 实际: {current_rpm}RPM({actual_percent}%)"
+                    else:
+                        rpm_info = f", 实际: {current_rpm}RPM"
+        except Exception:
+            pass  # 如果无法读取RPM，就不显示
+            
+        self.logger.info(f"硬盘温度: {temp_info}, 最高: {max_temp}°C, 风扇: {new_speed}%{rpm_info}")
         
         return temperatures, max_temp, new_speed
     
