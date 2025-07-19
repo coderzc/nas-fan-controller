@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  nas-fan-controller:
+    image: czcoder/nas-fan-controller:latest
+    container_name: nas-fan-controller
+    restart: unless-stopped
+    
+    # 特权模式，允许访问硬件设备
+    privileged: true
+    
+    # 挂载必要的系统目录
+    volumes:
+      # 系统设备目录（访问硬盘和风扇控制）
+      - /dev:/dev
+      - /sys:/sys
+      - /proc:/proc:ro
+      
+      # 如果需要自定义配置文件（YAML格式）
+      - ./fan_config.yaml:/app/fan_config.yaml:ro
+    
+    # 网络模式设为host，确保能访问所有硬件
+    network_mode: host
+    
+    # 环境变量
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Shanghai
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "python3", "/app/nas_fan_controller.py", "--test"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

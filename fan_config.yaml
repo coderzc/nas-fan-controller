@@ -1,0 +1,46 @@
+# NAS风扇控制器配置文件
+# 支持注释，更加友好！
+
+# 温度阈值配置（摄氏度）
+temperature_thresholds:
+  low: 35       # 低温阈值
+  medium: 45    # 中温阈值  
+  high: 55      # 高温阈值
+  critical: 65  # 临界温度
+
+# 风扇转速配置（百分比 0-100）
+fan_speeds:
+  low: 30       # 低速 30%
+  medium: 50    # 中速 50%
+  high: 70      # 高速 70%
+  critical: 100 # 最高速 100%
+
+# 检查间隔（秒）
+check_interval: 10
+
+# 要监控的硬盘设备列表
+# 空列表表示自动发现所有硬盘
+disks: []
+# 示例：指定特定硬盘
+# disks:
+#   - /dev/sda
+#   - /dev/sdb
+#   - /dev/nvme0n1
+
+# 风扇控制路径配置
+# 默认使用标准Linux PWM接口，用户可根据具体硬件调整
+fan_control_paths:
+  fan_ctrl_speed: /sys/class/hwmon/hwmon0/pwm1     # PWM控制路径
+  fan_speed: /sys/class/hwmon/hwmon0/fan1_input   # 风扇转速读取路径
+
+# 常见硬件配置示例：
+# 绿联NAS:
+#   fan_ctrl_speed: /sys/devices/platform/ug-fan/fan_ctrl_speed
+#   fan_speed: /sys/devices/platform/ug-fan/fan_speed
+# 其他硬件:
+#   fan_ctrl_speed: /sys/class/hwmon/hwmon1/pwm2
+#   fan_speed: /sys/class/hwmon/hwmon1/fan2_input
+
+# 温度滞后值（摄氏度）
+# 防止风扇转速频繁切换
+hysteresis: 2

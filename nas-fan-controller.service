@@ -1,0 +1,26 @@
+[Unit]
+Description=NAS Fan Controller Service
+Documentation=https://github.com/your-repo/nas-fan-controller
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/path/to/script/directory
+ExecStart=/usr/bin/python3 /path/to/script/directory/nas_fan_controller.py --daemon
+ExecStop=/bin/kill -s QUIT $MAINPID
+Restart=always
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=5
+
+# 安全设置
+NoNewPrivileges=false
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/path/to/script/directory
+
+[Install]
+WantedBy=multi-user.target
