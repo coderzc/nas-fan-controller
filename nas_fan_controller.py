@@ -179,9 +179,27 @@ class FanController:
         """获取当前PWM设置的转速百分比"""
         try:
             with open(self.fan_ctrl_path, 'r') as f:
-                current_pwm = int(f.read().strip())
-                return int((current_pwm / self.max_value) * 100)
-        except (PermissionError, FileNotFoundError, OSError, ValueError) as e:
+                pwm_output = f.read().strip()
+                
+                # 尝试直接解析为整数(标准Linux格式)
+                try:
+                    current_pwm = int(pwm_output)
+                    return int((current_pwm / self.max_value) * 100)
+                except ValueError:
+                    pass
+                
+                # 绿联格式: "now 255 of 255 (set 0 ~ 255)"
+                import re
+                pwm_match = re.search(r'now\s+(\d+)\s+of\s+(\d+)', pwm_output)
+                if pwm_match:
+                    current_pwm = int(pwm_match.group(1))
+                    max_pwm = int(pwm_match.group(2))
+                    return int((current_pwm / max_pwm) * 100)
+                
+                self.logger.warning(f"无法解析PWM输出格式: {pwm_output}")
+                return 0
+                
+        except (PermissionError, FileNotFoundError, OSError) as e:
             self.logger.warning(f"读取 {self.fan_ctrl_path} PWM值失败: {e}")
             return 0
     
