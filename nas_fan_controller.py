@@ -347,13 +347,29 @@ class NASFanController:
         if current_speed == 0:  # 如果读取失败，使用默认值
             current_speed = self.config['fan_speeds']['low']
         
+        # 确定温度档位
+        thresholds = self.config['temperature_thresholds']
+        if max_temp >= thresholds['critical']:
+            temp_level = "临界高温"
+        elif max_temp >= thresholds['high']:
+            temp_level = "高温"
+        elif max_temp >= thresholds['medium']:
+            temp_level = "中温"
+        elif max_temp >= thresholds['low']:
+            temp_level = "低温"
+        else:
+            temp_level = "超低温"
+        
         # 计算新的风扇转速
         new_speed = self.calculate_fan_speed(max_temp, current_speed)
         
         # 设置风扇转速
         if new_speed != current_speed:
+            self.logger.info(f"温度: {max_temp}°C ({temp_level}), 当前PWM: {current_speed}%, 目标PWM: {new_speed}%")
             if self.fan_controller.set_fan_speed(new_speed):
                 self.logger.info(f"风扇转速调整: {current_speed}% -> {new_speed}%")
+                # 等待风扇转速稳定
+                time.sleep(3)  # 等待3秒让风扇加速/减速到目标转速
             else:
                 self.logger.error("设置风扇转速失败")
         
