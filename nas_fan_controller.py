@@ -199,6 +199,14 @@ class NASFanController:
         pwm_max_value = self.config['pwm_config']['max_value']
         self.fan_controller = FanController(fan_ctrl_path, fan_speed_path, pwm_max_value)
         self.logger = logging.getLogger(__name__)
+        
+        # 缓存硬盘列表，避免每次都重新发现
+        if self.config['disks']:
+            self._cached_devices = self.config['disks']
+        else:
+            self._cached_devices = self.temp_monitor.discover_disks()
+        
+        self.logger.info(f"监控硬盘列表: {self._cached_devices}")
     
     def _load_config(self) -> Dict:
         """加载配置文件，支持YAML和JSON格式"""
@@ -299,11 +307,8 @@ class NASFanController:
         Returns:
             (温度字典, 最高温度, 设置的风扇转速)
         """
-        # 获取要监控的硬盘列表
-        if self.config['disks']:
-            devices = self.config['disks']
-        else:
-            devices = self.temp_monitor.discover_disks()
+        # 使用缓存的硬盘列表
+        devices = self._cached_devices
         
         if not devices:
             self.logger.error("未发现任何硬盘设备")
