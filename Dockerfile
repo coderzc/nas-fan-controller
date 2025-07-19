@@ -1,5 +1,5 @@
 # 使用官方Python基础镜像，支持多架构
-FROM --platform=$BUILDPLATFORM python:3.11-slim
+FROM python:3.11-slim
 
 # 设置工作目录
 WORKDIR /app
