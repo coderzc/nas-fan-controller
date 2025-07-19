@@ -166,13 +166,23 @@ class FanController:
             return False
 
     def get_current_speed(self) -> int:
-        """获取当前风扇转速百分比"""
+        """获取当前风扇转速百分比（从实际RPM读取）"""
         try:
             with open(self.fan_speed_path, 'r') as f:
                 current_speed = int(f.read().strip())
                 return int((current_speed / self.max_value) * 100)
         except (PermissionError, FileNotFoundError, OSError, ValueError) as e:
             self.logger.warning(f"读取 {self.fan_speed_path} 失败: {e}")
+            return 0
+    
+    def get_current_pwm_speed(self) -> int:
+        """获取当前PWM设置的转速百分比"""
+        try:
+            with open(self.fan_ctrl_path, 'r') as f:
+                current_pwm = int(f.read().strip())
+                return int((current_pwm / self.max_value) * 100)
+        except (PermissionError, FileNotFoundError, OSError, ValueError) as e:
+            self.logger.warning(f"读取 {self.fan_ctrl_path} PWM值失败: {e}")
             return 0
     
 
@@ -309,8 +319,10 @@ class NASFanController:
         # 计算最高温度
         max_temp = max(temperatures.values())
         
-        # 获取当前风扇转速（简化处理，使用配置中的默认值）
-        current_speed = getattr(self, '_last_fan_speed', self.config['fan_speeds']['low'])
+        # 获取当前实际的PWM设置值
+        current_speed = self.fan_controller.get_current_pwm_speed()
+        if current_speed == 0:  # 如果读取失败，使用默认值
+            current_speed = self.config['fan_speeds']['low']
         
         # 计算新的风扇转速
         new_speed = self.calculate_fan_speed(max_temp, current_speed)
@@ -318,7 +330,6 @@ class NASFanController:
         # 设置风扇转速
         if new_speed != current_speed:
             if self.fan_controller.set_fan_speed(new_speed):
-                self._last_fan_speed = new_speed
                 self.logger.info(f"风扇转速调整: {current_speed}% -> {new_speed}%")
             else:
                 self.logger.error("设置风扇转速失败")
